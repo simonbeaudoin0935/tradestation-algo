@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include "pricestreamer.h"
+#include "pricefetcher.h"
 
 class QThread;
 class QSettings;
@@ -19,9 +20,13 @@ private slots:
 private:
     PriceStreamer* streamer;
     QThread* thread;
+
+    PriceFetcher* price_fetcher;
+    QThread* pricefetcher_thread;
+
     QSettings* settings;
 
-    QString loadAccessToken();
+    QString loadAccessToken(bool mockMode);
 };
 
 #endif // MAINAPP_H
