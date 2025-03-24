@@ -11,10 +11,14 @@ MainApp::MainApp(const QString &configFile, const QString &nasdaqCsvFile, bool m
     QString accessToken = loadAccessToken(mockMode);
     NASDAQ_stocks = Stock::parseCsv(nasdaqCsvFile);
 
+    // Initialize mock prices if in mock mode
+    mocked_stock_prices = mockMode ? new MockedStockPrices(NASDAQ_stocks) : nullptr;
+
     // PriceStreamer
     {
-        streamer = new PriceStreamer(accessToken, "AAPL", mockMode);
+        streamer = new PriceStreamer(accessToken, "AAPL", mockMode, mocked_stock_prices);
         thread = new QThread(this); //TODO rename this variable because there are going to be lots of price streamer in the future
+        thread->setObjectName("PriceStreamer");
 
         streamer->moveToThread(thread);
         connect(thread, &QThread::started, streamer, &PriceStreamer::start);
@@ -25,8 +29,9 @@ MainApp::MainApp(const QString &configFile, const QString &nasdaqCsvFile, bool m
 
     // PriceFetcher
     {
-        price_fetcher = new PriceFetcher(accessToken, NASDAQ_stocks, mockMode, 1 /* 1 min */);
+        price_fetcher = new PriceFetcher(accessToken, NASDAQ_stocks, mockMode, 1 /* 1 min */, mocked_stock_prices);
         price_fetcher_thread = new QThread(this);
+        price_fetcher_thread->setObjectName("PriceFetcher");
 
         price_fetcher->moveToThread(price_fetcher_thread);
         connect(price_fetcher_thread, &QThread::started, price_fetcher, &PriceFetcher::start);
@@ -40,16 +45,17 @@ MainApp::~MainApp() {
     streamer->stop();
     thread->quit();
     thread->wait();
-    delete streamer;
     delete thread;
 
-    if (price_fetcher) {
-        price_fetcher->stop();
-        price_fetcher_thread->quit();
-        price_fetcher_thread->wait();
-        delete price_fetcher;
-        delete price_fetcher_thread;
-    }
+    price_fetcher->stop();
+    price_fetcher_thread->quit();
+    price_fetcher_thread->wait();
+    delete price_fetcher_thread;
+
+    delete streamer;
+    delete price_fetcher;
+    delete mocked_stock_prices;
+    delete settings;
 
     delete settings;
 }

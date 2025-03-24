@@ -64,13 +64,14 @@ private:
 };
 
 
-PriceStreamer::PriceStreamer(const QString& accessToken, const QString& symbol, bool mockMode, QObject* parent):
+PriceStreamer::PriceStreamer(const QString& accessToken, const QString& symbol, bool mockMode, MockedStockPrices* mockPrices, QObject* parent):
     QObject(parent),
     network_manager(new QNetworkAccessManager(this)),
     accessToken(accessToken),
     symbol(symbol),
     running(true),
-    mockMode(mockMode)
+    mockMode(mockMode),
+    mockPrices(mockPrices)
 {
     if (mockMode) {
         mockTimer = new QTimer(this);
@@ -130,11 +131,12 @@ void PriceStreamer::streamPrices() {
 
 void PriceStreamer::generateMockData() {
     if (!mockMode || !currentReply) return;
+    if (!mockPrices) {
+        qFatal() << "Mock mode enabled but no MockedStockPrices provided";
+        return;
+    }
 
-    // Generate fake price data
-    static double lastPrice = 150.0;
-    lastPrice += (QRandomGenerator::global()->bounded(10) - 5) * 0.01;
-    lastPrice = QString::number(lastPrice, 'f', 2).toDouble();  // Round to 2 decimals for calculation
+    double lastPrice = mockPrices->getPrice(symbol);
 
     QJsonObject mockData;
     mockData["Last"] = QString::number(lastPrice, 'f', 2);       // Keep as string

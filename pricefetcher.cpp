@@ -8,11 +8,12 @@
 #include <QRandomGenerator>
 #include <QDebug>
 
-PriceFetcher::PriceFetcher(const QString& accessToken, QList<Stock>& stocks, bool mockMode, int intervalMinutes, QObject* parent) :
+PriceFetcher::PriceFetcher(const QString& accessToken, QList<Stock>& stocks, bool mockMode, int intervalMinutes, MockedStockPrices* mockPrices, QObject* parent) :
     QObject(parent),
     network_manager(new QNetworkAccessManager(this)),
     accessToken(accessToken),
     stocks(stocks),
+    mockPrices(mockPrices),
     running(true),
     mockMode(mockMode),
     fetch_timer(new QTimer(this))
@@ -49,9 +50,13 @@ void PriceFetcher::fetchPrices() {
     }
 
     if (mockMode) {
-        // Simulate price updates
+       if (!mockPrices) {
+           qFatal() << "Mock mode enabled but no MockedStockPrices provided";
+        }
+        // Fetch all prices from MockedStockPrices
+        QMap<QString, double> mockPricesMap = mockPrices->getAllPrices();
         for (Stock& stock : stocks) {
-            stock.lastSale += (QRandomGenerator::global()->bounded(10) - 5) * 0.01;  // ±0.05 random change
+            stock.lastSale = mockPricesMap.value(stock.symbol, stock.lastSale);  // Update or keep original if not found
         }
         locker.unlock();  // Unlock before emitting
         qDebug() << "Mock updated prices for" << stocks.size() << "stocks";

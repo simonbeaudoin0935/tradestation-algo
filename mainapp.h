@@ -4,6 +4,7 @@
 #include <QObject>
 #include "pricestreamer.h"
 #include "pricefetcher.h"
+#include "mockedstockprices.h"
 
 class QThread;
 class QSettings;
@@ -27,6 +28,8 @@ private:
 
     PriceFetcher* price_fetcher;
     QThread* price_fetcher_thread;
+
+    MockedStockPrices* mocked_stock_prices;
 
     QSettings* settings;
 

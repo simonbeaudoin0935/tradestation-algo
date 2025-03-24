@@ -45,5 +45,10 @@ QList<Stock> Stock::parseCsv(const QString& filePath) {
     file.close();
 
     qDebug() << "Parsed" << stocks.size() << "stocks from" << filePath;
+
+    if (stocks.isEmpty()) {
+        qFatal() << "The list of stocks is empty";
+    }
+
     return stocks;
 }
