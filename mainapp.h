@@ -15,16 +15,22 @@ public:
     ~MainApp();
 
 private slots:
+    // Called when a new price from the single stock stream is received
     void onPriceUpdated(const QJsonObject& priceData);
+
+    // Called when all stock prices from the whole list are fetched
+    void onPricesFetched();
 
 private:
     PriceStreamer* streamer;
     QThread* thread;
 
     PriceFetcher* price_fetcher;
-    QThread* pricefetcher_thread;
+    QThread* price_fetcher_thread;
 
     QSettings* settings;
+
+    QList<Stock> NASDAQ_stocks;
 
     QString loadAccessToken(bool mockMode);
 };

@@ -18,7 +18,7 @@ signals:
     void priceUpdated(const QJsonObject& priceData);
 
 private:
-    QNetworkAccessManager* manager;
+    QNetworkAccessManager* network_manager;
     QString accessToken;
     QString symbol;
     QNetworkReply* currentReply = nullptr;

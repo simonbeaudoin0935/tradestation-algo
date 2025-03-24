@@ -5,7 +5,7 @@
 #include <QTimer>
 #include <QNetworkAccessManager>
 #include <QMutex>
-#include "stock/stock.h"
+#include "stock.h"
 
 class QNetworkReply;
 
@@ -19,20 +19,21 @@ public:
     void stop();
 
 signals:
-    void pricesUpdated();
+    void pricesFetched();
 
 private slots:
     void fetchPrices();
     void onQuotesReceived();
 
 private:
+    QNetworkAccessManager* network_manager;
     QString accessToken;
     QList<Stock>& stocks;
-    bool mockMode;         // Added mock mode
-    QMutex stocksMutex;
-    QTimer* timer;
-    QNetworkAccessManager* manager;
     QList<QNetworkReply*> pendingReplies;
+    QMutex stocksMutex;
+    bool running;
+    bool mockMode;         // Added mock mode
+    QTimer* fetch_timer;
 
     static const int BATCH_SIZE = 500;
 };

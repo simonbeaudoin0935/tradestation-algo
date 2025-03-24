@@ -2,18 +2,23 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QJsonArray>
 #include <QThread>
 #include <QRandomGenerator>
 #include <QDebug>
 
-PriceFetcher::PriceFetcher(const QString& accessToken, QList<Stock>& stocks, bool mockMode, int intervalMinutes, QObject* parent)
-    : QObject(parent), accessToken(accessToken), stocks(stocks), mockMode(mockMode) {
-    timer = new QTimer(this);
-    manager = new QNetworkAccessManager(this);
-
-    timer->setInterval(intervalMinutes * 60 * 1000);  // e.g., 1 min = 60,000 ms
-    connect(timer, &QTimer::timeout, this, &PriceFetcher::fetchPrices);
+PriceFetcher::PriceFetcher(const QString& accessToken, QList<Stock>& stocks, bool mockMode, int intervalMinutes, QObject* parent) :
+    QObject(parent),
+    network_manager(new QNetworkAccessManager(this)),
+    accessToken(accessToken),
+    stocks(stocks),
+    running(true),
+    mockMode(mockMode),
+    fetch_timer(new QTimer(this))
+{
+    fetch_timer->setInterval(intervalMinutes * 60 * 1000);  // e.g., 1 min = 60,000 ms
+    connect(fetch_timer, &QTimer::timeout, this, &PriceFetcher::fetchPrices);
 }
 
 PriceFetcher::~PriceFetcher() {
@@ -22,11 +27,13 @@ PriceFetcher::~PriceFetcher() {
 
 void PriceFetcher::start() {
     fetchPrices();  // Fetch immediately
-    timer->start();  // Then repeat
+    fetch_timer->start();  // Start periodic fetching
 }
 
 void PriceFetcher::stop() {
-    timer->stop();
+    running = false;
+
+    fetch_timer->stop();
     for (QNetworkReply* reply : pendingReplies) {
         reply->abort();
         reply->deleteLater();
@@ -37,7 +44,7 @@ void PriceFetcher::stop() {
 void PriceFetcher::fetchPrices() {
     QMutexLocker locker(&stocksMutex);
     if (stocks.isEmpty()) {
-        qDebug() << "No stocks to fetch prices for";
+        qFatal() << "No stocks to fetch prices for";
         return;
     }
 
@@ -48,7 +55,7 @@ void PriceFetcher::fetchPrices() {
         }
         locker.unlock();  // Unlock before emitting
         qDebug() << "Mock updated prices for" << stocks.size() << "stocks";
-        emit pricesUpdated();
+        emit pricesFetched();
         return;
     }
 
@@ -64,7 +71,7 @@ void PriceFetcher::fetchPrices() {
         QString symbolBatch = batch.join(",");
         QNetworkRequest request(QUrl("https://api.tradestation.com/v3/marketdata/quotes/" + symbolBatch));
         request.setRawHeader("Authorization", ("Bearer " + accessToken).toUtf8());
-        QNetworkReply* reply = manager->get(request);
+        QNetworkReply* reply = network_manager->get(request);
         connect(reply, &QNetworkReply::finished, this, &PriceFetcher::onQuotesReceived);
         pendingReplies.append(reply);
 
@@ -102,6 +109,6 @@ void PriceFetcher::onQuotesReceived() {
 
     if (pendingReplies.isEmpty()) {
         qDebug() << "Updated prices for" << stocks.size() << "stocks";
-        emit pricesUpdated();
+        emit pricesFetched();
     }
 }

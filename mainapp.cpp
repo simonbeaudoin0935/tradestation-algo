@@ -1,5 +1,5 @@
 #include "mainapp.h"
-#include "stock/stock.h"
+#include "stock.h"
 #include <QThread>
 #include <QSettings>
 #include <QDebug>
@@ -9,14 +9,12 @@
 MainApp::MainApp(const QString &configFile, const QString &nasdaqCsvFile, bool mockMode, QObject* parent) : QObject(parent) {
     settings = new QSettings(configFile, QSettings::IniFormat, this);
     QString accessToken = loadAccessToken(mockMode);
-    QList<Stock> NASDAQ_stocks = Stock::parseCsv(nasdaqCsvFile);
+    NASDAQ_stocks = Stock::parseCsv(nasdaqCsvFile);
 
-
-    //----------------------------------------------------------------------------------------------------------------
     // PriceStreamer
     {
         streamer = new PriceStreamer(accessToken, "AAPL", mockMode);
-        thread = new QThread(this);
+        thread = new QThread(this); //TODO rename this variable because there are going to be lots of price streamer in the future
 
         streamer->moveToThread(thread);
         connect(thread, &QThread::started, streamer, &PriceStreamer::start);
@@ -28,13 +26,13 @@ MainApp::MainApp(const QString &configFile, const QString &nasdaqCsvFile, bool m
     // PriceFetcher
     {
         price_fetcher = new PriceFetcher(accessToken, NASDAQ_stocks, mockMode, 1 /* 1 min */);
-        pricefetcher_thread = new QThread(this);
+        price_fetcher_thread = new QThread(this);
 
-        price_fetcher->moveToThread(pricefetcher_thread);
+        price_fetcher->moveToThread(price_fetcher_thread);
+        connect(price_fetcher_thread, &QThread::started, price_fetcher, &PriceFetcher::start);
+        connect(price_fetcher, &PriceFetcher::pricesFetched, this, &MainApp::onPricesFetched);
 
-        //TODO take care of the connections
-
-        thread->start();
+        price_fetcher_thread->start();
     }
 }
 
@@ -42,9 +40,18 @@ MainApp::~MainApp() {
     streamer->stop();
     thread->quit();
     thread->wait();
-
-    //TODO clean up after pricefetcher just like price streamer
     delete streamer;
+    delete thread;
+
+    if (price_fetcher) {
+        price_fetcher->stop();
+        price_fetcher_thread->quit();
+        price_fetcher_thread->wait();
+        delete price_fetcher;
+        delete price_fetcher_thread;
+    }
+
+    delete settings;
 }
 
 QString MainApp::loadAccessToken(bool mockMode) {
@@ -60,4 +67,9 @@ QString MainApp::loadAccessToken(bool mockMode) {
 
 void MainApp::onPriceUpdated(const QJsonObject& priceData) {
     qDebug() << "Main Thread - Price Updated:" << priceData;
+}
+
+void MainApp::onPricesFetched()
+{
+    qCritical() << Q_FUNC_INFO << "TODO act on prices fetched";
 }

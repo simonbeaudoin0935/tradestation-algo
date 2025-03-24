@@ -64,10 +64,14 @@ private:
 };
 
 
-PriceStreamer::PriceStreamer(const QString& accessToken, const QString& symbol, bool mockMode, QObject* parent)
-    : QObject(parent), accessToken(accessToken), symbol(symbol), running(true) {
-    manager = new QNetworkAccessManager(this);
-    this->mockMode = mockMode;
+PriceStreamer::PriceStreamer(const QString& accessToken, const QString& symbol, bool mockMode, QObject* parent):
+    QObject(parent),
+    network_manager(new QNetworkAccessManager(this)),
+    accessToken(accessToken),
+    symbol(symbol),
+    running(true),
+    mockMode(mockMode)
+{
     if (mockMode) {
         mockTimer = new QTimer(this);
         connect(mockTimer, &QTimer::timeout, this, &PriceStreamer::generateMockData);
@@ -84,6 +88,7 @@ void PriceStreamer::start() {
 
 void PriceStreamer::stop() {
     running = false;
+
     if (currentReply) {
         currentReply->abort();
         currentReply->deleteLater();
@@ -105,7 +110,7 @@ void PriceStreamer::streamPrices() {
             request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
             request.setRawHeader("Authorization", ("Bearer " + accessToken).toUtf8());
 
-            currentReply = manager->get(request);
+            currentReply = network_manager->get(request);
         }
 
         connect(currentReply, &QNetworkReply::readyRead, this, &PriceStreamer::onReadyRead);
@@ -129,10 +134,12 @@ void PriceStreamer::generateMockData() {
     // Generate fake price data
     static double lastPrice = 150.0;
     lastPrice += (QRandomGenerator::global()->bounded(10) - 5) * 0.01;
+    lastPrice = QString::number(lastPrice, 'f', 2).toDouble();  // Round to 2 decimals for calculation
+
     QJsonObject mockData;
-    mockData["Last"] = lastPrice;
-    mockData["Bid"] = lastPrice - 0.02;
-    mockData["Ask"] = lastPrice + 0.02;
+    mockData["Last"] = QString::number(lastPrice, 'f', 2);       // Keep as string
+    mockData["Bid"] = QString::number(lastPrice - 0.02, 'f', 2); // Keep as string
+    mockData["Ask"] = QString::number(lastPrice + 0.02, 'f', 2); // Keep as string
     mockData["Symbol"] = symbol;
     mockData["Time"] = QDateTime::currentDateTime().toString(Qt::ISODate);
 
@@ -149,7 +156,7 @@ void PriceStreamer::onReadyRead() {
 
         // Example: Print price data
         if (priceData.contains("Last")) {
-            qDebug() << "Last Price:" << priceData["Last"].toDouble();
+            //qDebug() << "Last Price:" << priceData["Last"].toDouble();
         }
     } else {
         qDebug() << "Failed to parse JSON:" << data;
