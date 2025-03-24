@@ -7,6 +7,9 @@ GuiFrontend::GuiFrontend(QObject* parent) : AppFrontend(parent) {
     ui->setupUi(new QMainWindow());
     //ui->centralwidget->setParent(this);
     static_cast<QMainWindow*>(ui->centralwidget->parent())->show();
+
+    ui->priceChart->setSymbol("AAPL"); // TODO this is static temporarily
+
 }
 
 GuiFrontend::~GuiFrontend() {
@@ -15,6 +18,15 @@ GuiFrontend::~GuiFrontend() {
 
 void GuiFrontend::onPriceUpdated(const QJsonObject& priceData) {
     ui->logDisplay->append(QString("Price Updated: %1").arg(QString(QJsonDocument(priceData).toJson(QJsonDocument::Compact))));
+
+    double price = priceData["Last"].toString().toDouble();  // Convert string to double
+    QDateTime timestamp = QDateTime::fromString(priceData["Time"].toString(), Qt::ISODate);
+
+    if (timestamp.isValid()) {
+        ui->priceChart->addPrice(price, timestamp);
+    } else {
+        ui->logDisplay->append("Cant add a point to the chart, the date is fucked.");
+    }
 }
 
 void GuiFrontend::onPricesFetched() {

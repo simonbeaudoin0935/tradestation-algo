@@ -30,14 +30,19 @@ HEADERS += \
 }
 # GUI-specific files and module
 gui {
-    QT += widgets           # Adds QtWidgets (and implicitly QtGui)
+    QT += widgets charts    # Adds QtWidgets (and implicitly QtGui)
     DEFINES += GUI_ENABLED  # For conditional compilation in code
+
     SOURCES += \
-        gui/guifrontend.cpp
+        gui/guifrontend.cpp \
+        gui/stockpricechart.cpp \
+
     HEADERS += \
-        gui/guifrontend.h
+        gui/guifrontend.h \
+        gui/stockpricechart.h
+
     FORMS += \
-    gui/guifrontend.ui
+        gui/guifrontend.ui
 
 }
 
