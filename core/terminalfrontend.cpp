@@ -1,7 +1,9 @@
 #include "terminalfrontend.h"
 #include <QDebug>
 
-TerminalFrontend::TerminalFrontend(QObject* parent) : AppFrontend(parent) {}
+TerminalFrontend::TerminalFrontend(QObject* parent) : AppFrontend(parent) {
+
+}
 
 void TerminalFrontend::onPriceUpdated(const QJsonObject& priceData) {
     qDebug() << "Main Thread - Price Updated:" << priceData;

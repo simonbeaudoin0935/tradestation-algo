@@ -10,11 +10,14 @@ MainApp::MainApp(const QString &configFile, const QString &nasdaqCsvFile, bool m
     settings = new QSettings(configFile, QSettings::IniFormat, this);
     QString accessToken = loadAccessToken(mockMode);
     NASDAQ_stocks = Stock::parseCsv(nasdaqCsvFile);
+    frontend = nullptr;  // Set via setFrontend later
 
     // Initialize mock prices if in mock mode
     mocked_stock_prices = mockMode ? new MockedStockPrices(NASDAQ_stocks) : nullptr;
 
     // PriceStreamer
+    // TODO This will change later because there will be more than one price streamer.
+    //      They will be held and managed in some structure, created and deleted dynamically
     {
         streamer = new PriceStreamer(accessToken, "AAPL", mockMode, mocked_stock_prices);
         thread = new QThread(this); //TODO rename this variable because there are going to be lots of price streamer in the future
@@ -56,8 +59,6 @@ MainApp::~MainApp() {
     delete price_fetcher;
     delete mocked_stock_prices;
     delete settings;
-
-    delete settings;
 }
 
 QString MainApp::loadAccessToken(bool mockMode) {
@@ -71,11 +72,20 @@ QString MainApp::loadAccessToken(bool mockMode) {
     return accessToken;
 }
 
-void MainApp::onPriceUpdated(const QJsonObject& priceData) {
-    qDebug() << "Main Thread - Price Updated:" << priceData;
+void MainApp::onPriceUpdated(const QJsonObject& priceData)
+{
+    if (frontend != nullptr){
+        frontend->onPriceUpdated(priceData);
+    }
 }
 
 void MainApp::onPricesFetched()
 {
-    qCritical() << Q_FUNC_INFO << "TODO act on prices fetched";
+    if (frontend != nullptr){
+        frontend->onPricesFetched();
+    }
+}
+
+void MainApp::setFrontend(AppFrontend* frontend) {
+   this->frontend = frontend;
 }

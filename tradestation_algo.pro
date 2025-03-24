@@ -6,14 +6,13 @@ TEMPLATE = app
 
 # Common files (always included)
 SOURCES += \
+    main.cpp \
     core/appfrontend.cpp \
-    core/main.cpp \
     core/pricestreamer.cpp \
     core/mainapp.cpp \
     core/mockedstockprices.cpp \
     core/pricefetcher.cpp \
-    core/stock.cpp \
-    core/terminalfrontend.cpp
+    core/stock.cpp
 
 HEADERS += \
     core/appfrontend.h \
@@ -21,14 +20,13 @@ HEADERS += \
     core/mainapp.h \
     core/mockedstockprices.h \
     core/pricefetcher.h \
-    core/stock.h \
-    core/terminalfrontend.h
+    core/stock.h
 
 !gui {
     SOURCES += \
         core/terminalfrontend.cpp
     HEADERS += \
-        core/terminalguifrontend.h
+        core/terminalfrontend.h
 }
 # GUI-specific files and module
 gui {

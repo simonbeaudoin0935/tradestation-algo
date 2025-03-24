@@ -2,9 +2,11 @@
 #define MAINAPP_H
 
 #include <QObject>
+
 #include "pricestreamer.h"
 #include "pricefetcher.h"
 #include "mockedstockprices.h"
+#include "appfrontend.h"
 
 class QThread;
 class QSettings;
@@ -14,6 +16,8 @@ class MainApp : public QObject {
 public:
     MainApp(const QString& configFile, const QString& nasdaqCsvFile, bool mockMode = false, QObject* parent = nullptr);
     ~MainApp();
+
+    void setFrontend(AppFrontend* frontend);
 
 private slots:
     // Called when a new price from the single stock stream is received
@@ -32,7 +36,7 @@ private:
     MockedStockPrices* mocked_stock_prices;
 
     QSettings* settings;
-
+    AppFrontend* frontend;
     QList<Stock> NASDAQ_stocks;
 
     QString loadAccessToken(bool mockMode);
