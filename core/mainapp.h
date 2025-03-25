@@ -36,7 +36,7 @@ private:
 
     MockedStockPrices* mocked_stock_prices;
 
-    MainAlgo* main_algo;
+    MainAlgo* mainAlgo;
 
     QSettings* settings;
     AppFrontend* frontend;

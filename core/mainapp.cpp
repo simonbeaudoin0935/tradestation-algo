@@ -10,6 +10,7 @@ MainApp::MainApp(const QString &configFile, const QString &nasdaqCsvFile, bool m
     settings = new QSettings(configFile, QSettings::IniFormat, this);
     QString accessToken = loadAccessToken(mockMode);
     NASDAQ_stocks = Stock::parseCsv(nasdaqCsvFile);
+    mainAlgo = new MainAlgo(this);
     frontend = nullptr;  // Set via setFrontend later
 
     // Initialize mock prices if in mock mode
@@ -45,6 +46,10 @@ MainApp::MainApp(const QString &configFile, const QString &nasdaqCsvFile, bool m
 }
 
 MainApp::~MainApp() {
+
+    mainAlgo->stop();
+    delete mainAlgo;
+
     streamer->stop();
     thread->quit();
     thread->wait();
