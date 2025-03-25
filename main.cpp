@@ -9,7 +9,7 @@
 #include <QDebug>
 #include "core/mainapp.h"
 
-void processCLIArgs(const QStringList &args, bool &mockMode, QString &configFile, QString &nasdaqCsvFile){
+void processCLIArgs(const QStringList &args, bool &mockMode, QString &configFile, QString &criteriaFile, QString &nasdaqCsvFile){
     QCommandLineParser parser;
     parser.setApplicationDescription("TradeStation algorithmic trading application");
     parser.addHelpOption();
@@ -19,6 +19,9 @@ void processCLIArgs(const QStringList &args, bool &mockMode, QString &configFile
     parser.addOption(mockOption);
 
     QCommandLineOption configOption("config", "Path to the configuration file (e.g., config.ini)", "file");
+    parser.addOption(configOption);
+
+    QCommandLineOption criteriaOption("criteria", "Path to the criteria configuration file (e.g., criteria.ini)", "file");
     parser.addOption(configOption);
 
     QCommandLineOption nasdaqCsvOption("nasdaq-csv", "Path to CSV file containing NASDAQ symbols (e.g., nasdaq-csv.csv)", "file");
@@ -34,9 +37,14 @@ void processCLIArgs(const QStringList &args, bool &mockMode, QString &configFile
         qFatal() << "No config file specified. Usage: ./tradestation_algo --config <config_file>";
     }
 
+    criteriaFile = parser.value(criteriaOption);
+    if(criteriaFile.isEmpty()){
+        qFatal() << "No criteriaFile file specified. Usage: ./tradestation_algo --criteria <criteria_file>";
+    }
+
     nasdaqCsvFile = parser.value(nasdaqCsvOption);
     if(nasdaqCsvFile.isEmpty()){
-        qFatal() << "No nasdaq-csv file specified. Usage: ./tradestation_algo --nasdaq-csv <nasdaq-csv>";
+        qFatal() << "No nasdaq-csv file specified. Usage: ./tradestation_algo --nasdaq-csv <nasdaq_csv_file>";
     }
 }
 
@@ -48,12 +56,13 @@ int main(int argc, char* argv[]) {
 #endif
     bool mockMode;
     QString configFile;
+    QString criteriaFile;
     QString nasdaqCsvFile;
 
     QCoreApplication::setApplicationName("TradeStation Algo");
     QCoreApplication::setApplicationVersion("1.0");
 
-    processCLIArgs(app.arguments(), mockMode, configFile, nasdaqCsvFile);
+    processCLIArgs(app.arguments(), mockMode, configFile, criteriaFile, nasdaqCsvFile);
 
 
     MainApp mainApp(configFile, nasdaqCsvFile, mockMode);

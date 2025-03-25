@@ -7,6 +7,7 @@
 #include "pricefetcher.h"
 #include "mockedstockprices.h"
 #include "appfrontend.h"
+#include "algo/mainalgo.h"
 
 class QThread;
 class QSettings;
@@ -34,6 +35,8 @@ private:
     QThread* price_fetcher_thread;
 
     MockedStockPrices* mocked_stock_prices;
+
+    MainAlgo* main_algo;
 
     QSettings* settings;
     AppFrontend* frontend;

@@ -6,6 +6,8 @@ TEMPLATE = app
 
 # Common files (always included)
 SOURCES += \
+    algo/floatfetcher.cpp \
+    algo/mainalgo.cpp \
     main.cpp \
     core/appfrontend.cpp \
     core/pricestreamer.cpp \
@@ -15,6 +17,8 @@ SOURCES += \
     core/stock.cpp
 
 HEADERS += \
+    algo/floatfetcher.h \
+    algo/mainalgo.h \
     core/appfrontend.h \
     core/pricestreamer.h \
     core/mainapp.h \
