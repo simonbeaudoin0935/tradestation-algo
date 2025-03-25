@@ -22,7 +22,7 @@ void processCLIArgs(const QStringList &args, bool &mockMode, QString &configFile
     parser.addOption(configOption);
 
     QCommandLineOption criteriaOption("criteria", "Path to the criteria configuration file (e.g., criteria.ini)", "file");
-    parser.addOption(configOption);
+    parser.addOption(criteriaOption);
 
     QCommandLineOption nasdaqCsvOption("nasdaq-csv", "Path to CSV file containing NASDAQ symbols (e.g., nasdaq-csv.csv)", "file");
     parser.addOption(nasdaqCsvOption);
@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
 
 
     MainApp mainApp(configFile, nasdaqCsvFile, mockMode);
+
 #ifdef GUI_ENABLED
     mainApp.setFrontend(new GuiFrontend(&mainApp));
 #else
